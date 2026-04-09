@@ -3,7 +3,7 @@ name: pixel-pet
 description: Retro 90s Tamagotchi-style pet skill for AI Edge Gallery (Gemma 4 compatible) with persistent real-time decay, care actions, evolution, sickness, sleep, poop, discipline, and permanent death. Use when users ask to start pet care, check status, feed/play/clean/medicate/discipline/sleep/wake, or explicitly ask to show/open/display a pet dashboard.
 ---
 
-# Pixel Pet
+# Pixel Pet v1.0
 
 ## Instructions
 
