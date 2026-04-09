@@ -1,2 +1,4 @@
 interface:
-  display_name: "Pixel Pet"
+  display_name: "Pixel Pet v1.0"
+  short_description: "Retro Tamagotchi pet sim with persistent real-time care and pixel sprites."
+  default_prompt: "Take care of my pixel pet."
