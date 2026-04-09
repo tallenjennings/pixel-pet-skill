@@ -1,2 +1,4 @@
 interface:
   display_name: "Pixel Pet"
+  short_description: "Retro Tamagotchi pet with persistent care + dashboard webview."
+  default_prompt: "Start my pixel pet, then show dashboard."
