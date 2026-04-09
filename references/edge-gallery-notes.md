@@ -1,18 +1,33 @@
-# Edge Gallery notes
+# Edge Gallery notes (researched from `google-ai-edge/gallery`)
 
-This skill is designed around the Google AI Edge Gallery JavaScript skill pattern:
-- `SKILL.md` describes the tool contract.
-- `scripts/index.html` exposes `window.ai_edge_gallery_get_result(data)`.
-- The same `index.html` also doubles as a standalone retro dashboard when hosted.
+This skill follows the Agent Skills guidance in `gallery/skills/README.md`.
 
-Recommended hosting:
-- GitHub Pages or another static host that serves HTML with the correct MIME type.
-- If using GitHub Pages, add `.nojekyll` at the repo root when publishing the containing repository.
+## Required structure
 
-Recommended load flow on phone:
-1. Host the folder publicly.
-2. Verify `.../SKILL.md` loads directly.
-3. In Edge Gallery Agent Skills, use `Load skill from URL` and point it at the skill folder.
-4. Open the chat and start with `{"action":"init"}` or ask the model to initialize the pet.
+For JS skills, use:
 
-Because runtime support for returning an inline webview may vary by app version, the JS returns a `dashboard_url` field as a stable fallback. The same page can be opened directly in a browser when needed.
+- `SKILL.md` at skill root
+- `scripts/index.html` as JS entrypoint
+
+## Runtime requirements
+
+- Expose an async function on `window` named `ai_edge_gallery_get_result`.
+- Parse incoming `data` (stringified JSON).
+- Return a stringified JSON object.
+- Return either a `result` field on success or `error` on failure.
+
+## SKILL.md guidance used
+
+- Frontmatter must include `name` and `description`.
+- Instructions should explicitly tell the model to call `run_js` and define the JSON payload schema.
+
+## Add skill in app
+
+Based on the repository docs, skills can be loaded in AI Edge Gallery by:
+1. Community-featured skills
+2. URL loading
+3. Local file import
+
+## Hosting notes
+
+For URL loading, host the skill folder on a static host where `SKILL.md` and `scripts/index.html` are directly reachable over HTTPS.
