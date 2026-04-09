@@ -1,33 +1,49 @@
-# Edge Gallery notes (researched from `google-ai-edge/gallery`)
+# Edge Gallery implementation notes (`google-ai-edge/gallery`)
 
-This skill follows the Agent Skills guidance in `gallery/skills/README.md`.
+## JS skill contract (confirmed)
 
-## Required structure
+From `skills/README.md` and working featured skills (`virtual-piano`, `restaurant-roulette`):
 
-For JS skills, use:
+- JS entrypoint must expose `window['ai_edge_gallery_get_result'] = async (dataStr) => { ... }`.
+- Input `dataStr` is stringified JSON from `run_js`.
+- Return must be a stringified JSON object.
+- Success returns should include `result`; failures return `error`.
 
-- `SKILL.md` at skill root
-- `scripts/index.html` as JS entrypoint
+## Webview/display schema (confirmed from working skills)
 
-## Runtime requirements
+Working skills return:
 
-- Expose an async function on `window` named `ai_edge_gallery_get_result`.
-- Parse incoming `data` (stringified JSON).
-- Return a stringified JSON object.
-- Return either a `result` field on success or `error` on failure.
+```json
+{
+  "result": "...",
+  "webview": {
+    "url": "ui.html?v=...",
+    "aspectRatio": 1.0
+  }
+}
+```
 
-## SKILL.md guidance used
+Notes:
+- `webview.url` can be relative (served from skill assets).
+- `aspectRatio` is optional, but included for predictable card rendering.
 
-- Frontmatter must include `name` and `description`.
-- Instructions should explicitly tell the model to call `run_js` and define the JSON payload schema.
+## Pixel Pet actions used
 
-## Add skill in app
+- `start_pet`
+- `show_dashboard`
+- `status`
+- `feed_meal`
+- `feed_snack`
+- `play`
+- `clean`
+- `medicine`
+- `discipline`
+- `sleep`
+- `wake`
+- `tick`
 
-Based on the repository docs, skills can be loaded in AI Edge Gallery by:
-1. Community-featured skills
-2. URL loading
-3. Local file import
+## Sprite source
 
-## Hosting notes
-
-For URL loading, host the skill folder on a static host where `SKILL.md` and `scripts/index.html` are directly reachable over HTTPS.
+- Browse page: https://www.spriters-resource.com/lcd_handhelds/tamagotchioriginalp1p2/
+- Asset used: General Sprites (Simplified)
+- Required local file (user-provided): `scripts/assets/tamagotchi-p1p2-general-sprites.png`

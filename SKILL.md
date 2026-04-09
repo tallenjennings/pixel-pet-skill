@@ -1,106 +1,61 @@
 ---
 name: pixel-pet
-description: v1.0 retro tamagotchi-style virtual pet skill for Google AI Edge Gallery (or compatible run_js runtimes). Use when the user wants to raise a persistent pet with real-time decay, feeding, play, cleaning, medicine, discipline, sleep/wake, evolution stages, sickness, attention calls, and permanent death.
+description: Retro 90s Tamagotchi-style pet skill for AI Edge Gallery (Gemma 4 compatible) with persistent real-time decay, care actions, evolution, sickness, sleep, poop, discipline, and permanent death. Use when users ask to start pet care, check status, feed/play/clean/medicate/discipline/sleep/wake, or explicitly ask to show/open/display a pet dashboard.
 ---
 
 # Pixel Pet v1.0
 
-Run a retro tamagotchi-style pet that decays in real time and reacts with short toy-like narration.
+## Instructions
 
-## Core behavior
+Always call `run_js` for this skill.
 
-- Keep exactly one fixed starter pet named `mame` unless the user explicitly asks to rename it.
-- Treat the pet as persistent, not a throwaway demo.
-- Apply real-time decay using the saved timestamp between interactions.
-- Allow permanent death from neglect. Do not silently revive the pet.
-- Keep the tone retro, toy-like, and brief.
-- Keep outputs compact: updated status plus one or two lines of flavor text.
+### Script name
+- `index.html`
 
-## Runtime contract
+### Payload schema
+Send `data` as a JSON string with one field:
+- `action`: string, one of:
+  - `start_pet`
+  - `show_dashboard`
+  - `status`
+  - `feed_meal`
+  - `feed_snack`
+  - `play`
+  - `clean`
+  - `medicine`
+  - `discipline`
+  - `sleep`
+  - `wake`
+  - `tick`
 
-Call `run_js` with:
-- script name: `index.html`
-- data: a JSON string matching one of the supported actions below
+### Trigger/action mapping rules
+- If user says **“start my pet”**, **“start pet”**, or similar: use `start_pet`.
+- If user says **“show my pet”**, **“open dashboard”**, **“display my pet”**, **“show dashboard”**, or similar: use `show_dashboard`.
+- If user asks for state check: use `status`.
+- Use specific care action names for care requests.
 
-The script exposes `window.ai_edge_gallery_get_result(data)` and returns a JSON string with either:
-- success fields: `result`, `narration`, `pet`, `dashboard_url`, `dead`, `version`
-- or error field: `error`
+### Response contract from JS
+The script returns a stringified JSON object containing:
+- `result`: short summary text
+- `narration`: short retro flavor line
+- `pet`: full persistent state
+- `dead`: boolean
+- `sprite_variant`: current sprite/state variant
+- `version`: skill runtime version
+- `webview` (when dashboard should open):
+  - `url`: dashboard path or URL
+  - `aspectRatio`: number
 
-## Supported actions
+It may also include:
+- `dashboard_url`: reliable fallback URL for external opening
+- `error`: failure message
 
-### Initialize or restore
-```json
-{"action":"init"}
-```
+## Behavior requirements
 
-### Status check
-```json
-{"action":"status"}
-```
-
-### Care actions
-```json
-{"action":"feed_meal"}
-{"action":"feed_snack"}
-{"action":"play"}
-{"action":"clean"}
-{"action":"medicine"}
-{"action":"discipline"}
-{"action":"sleep"}
-{"action":"wake"}
-```
-
-### Rename
-```json
-{"action":"rename","name":"mimi"}
-```
-Use only if the user explicitly asks to rename.
-
-### Reset
-```json
-{"action":"reset"}
-```
-Use only when the user explicitly asks to start over.
-
-## Response handling
-
-After tool execution:
-- Tell the user what changed in plain language.
-- Mention urgent needs first: death, sickness, hunger, poop, sleep, attention.
-- Avoid modern sarcastic phrasing.
-- If `dead` is true, state it plainly and suggest reset only when asked.
-
-## Care rules
-
-- `feed_meal`: main food; reduces hunger reliably, slight weight gain.
-- `feed_snack`: quick happiness; overuse harms health and weight.
-- `play`: raises happiness + discipline, costs energy, increases hunger.
-- `clean`: removes poop, improves hygiene.
-- `medicine`: helps only when sick or health is low.
-- `discipline`: use when attention-calling without core need.
-- `sleep`: lights off and rest.
-- `wake`: only for explicit wake requests.
-
-## Hidden simulation expectations
-
-Support:
-- life stages (baby, child, teen, adult)
-- hidden care mistakes
-- snack overuse consequences
-- poop accumulation
-- sickness from neglect
-- sleep schedule
-- attention calls
-- care-based adult variants
-- permanent death after sustained neglect
-
-## Dashboard
-
-The bundled `scripts/index.html` is both the execution entrypoint and a standalone retro dashboard with pixel sprites.
-
-When hosted on GitHub Pages or another static host, it should show:
-- sprite display area
-- hunger, happiness, energy, hygiene, health, discipline
-- age, weight, life stage
-- poop, sickness, attention state
-- action buttons matching the supported actions
+- Keep one fixed pet named `mame`.
+- Persist state across turns.
+- Apply wall-clock decay between interactions.
+- Support stats: hunger, happiness, energy, hygiene, health, discipline, age, weight.
+- Support lifecycle/events: poop, sickness, sleep, attention, evolution, permanent death.
+- Keep narration short and retro toy-like.
+- If pet is dead, state it plainly; do not auto-revive.

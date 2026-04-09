@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Pet Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="shell">
+    <div class="header">Pixel Pet Dashboard</div>
+    <div class="screen">
+      <div class="pet-box">
+        <div class="bubble" id="bubble">...</div>
+        <canvas id="sprite" width="16" height="16"></canvas>
+      </div>
+      <div class="meta" id="meta">Loading...</div>
+      <div class="grid" id="stats"></div>
+      <div class="log" id="log">Waiting for state...</div>
+    </div>
+    <div class="footer">refreshes every 5s • real-time decay</div>
+  </div>
+
+  <script src="../scripts/pet-core.js"></script>
+  <script>
+    const SPRITE_SHEET_URL = '../scripts/assets/tamagotchi-p1p2-general-sprites.png';
+    const FRAME_MS = 380;
+    const ANIMATIONS = {
+      baby: [{ x: 0, y: 56 }, { x: 16, y: 56 }],
+      child: [{ x: 0, y: 72 }, { x: 16, y: 72 }],
+      teen: [{ x: 0, y: 88 }, { x: 16, y: 88 }],
+      adult_classic: [{ x: 64, y: 136 }, { x: 80, y: 136 }],
+      adult_angel: [{ x: 96, y: 136 }, { x: 112, y: 136 }],
+      adult_blob: [{ x: 128, y: 136 }, { x: 144, y: 136 }],
+      sick: [{ x: 160, y: 136 }, { x: 176, y: 136 }],
+      dirty: [{ x: 48, y: 120 }, { x: 64, y: 120 }],
+      attention: [{ x: 32, y: 104 }, { x: 48, y: 104 }],
+      sleeping: [{ x: 0, y: 168 }, { x: 16, y: 168 }],
+      dead: [{ x: 64, y: 168 }, { x: 80, y: 168 }]
+    };
+
+    const sprite = { image: null, ready: false, key: 'baby', idx: 0, lastTick: 0 };
+
+    function drawFrame(frame) {
+      const canvas = document.getElementById('sprite');
+      const ctx = canvas.getContext('2d');
+      if (!sprite.ready || !frame) return;
+      ctx.clearRect(0, 0, 16, 16);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sprite.image, frame.x, frame.y, 16, 16, 0, 0, 16, 16);
+    }
+
+    function tickAnimation(ts) {
+      const frames = ANIMATIONS[sprite.key] || ANIMATIONS.baby;
+      if (!sprite.lastTick || ts - sprite.lastTick >= FRAME_MS) {
+        sprite.lastTick = ts;
+        sprite.idx = (sprite.idx + 1) % frames.length;
+        drawFrame(frames[sprite.idx]);
+      }
+      requestAnimationFrame(tickAnimation);
+    }
+
+    function renderState(state) {
+      const p = state.pet;
+      const s = state.stats;
+      const key = window.PixelPetCore.spriteVariantFor(state);
+      if (key !== sprite.key) {
+        sprite.key = key;
+        sprite.idx = 0;
+        drawFrame((ANIMATIONS[key] || ANIMATIONS.baby)[0]);
+      }
+
+      document.getElementById('bubble').textContent = window.PixelPetCore.summarizeNeeds(state);
+      document.getElementById('meta').innerHTML = [
+        `<strong>Name:</strong> ${p.name}`,
+        `<strong>Stage:</strong> ${p.stage}${p.stage === 'adult' ? ' / ' + window.PixelPetCore.adultVariantFor(state) : ''}`,
+        `<strong>Age:</strong> ${p.ageHours.toFixed(1)}h`,
+        `<strong>Weight:</strong> ${p.weight}`,
+        `<strong>Poop:</strong> ${p.poop}`,
+        `<strong>Status:</strong> ${p.alive ? (p.asleep ? 'asleep' : 'awake') : '<span class="dead">dead</span>'}`,
+        `<strong>Sick:</strong> ${p.sick ? 'yes' : 'no'}`,
+        `<strong>Attention:</strong> ${p.attention ? 'calling' : 'quiet'}`
+      ].join(' • ');
+
+      const stats = [
+        ['Hunger', s.hunger], ['Happy', s.happiness], ['Energy', s.energy],
+        ['Hygiene', s.hygiene], ['Health', s.health], ['Discipline', s.discipline]
+      ];
+      document.getElementById('stats').innerHTML = stats.map(([label, value]) => `
+        <div class="stat"><div>${label}: ${Math.round(value)}</div>
+        <div class="bar"><div class="fill" style="width:${Math.max(0, Math.min(100, value))}%"></div></div></div>
+      `).join('');
+
+      document.getElementById('log').textContent = p.alive ? 'MEEP! Dashboard synced.' : '...No heartbeat.';
+    }
+
+    function refreshFromStorage() {
+      const state = window.PixelPetCore.loadState(window.localStorage);
+      renderState(state);
+    }
+
+    (async () => {
+      try {
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = SPRITE_SHEET_URL;
+        });
+        sprite.image = img;
+        sprite.ready = true;
+      } catch {
+        document.getElementById('log').textContent = 'Sprite sheet missing. Add tamagotchi-p1p2-general-sprites.png to scripts/assets.';
+      }
+
+      requestAnimationFrame(tickAnimation);
+      refreshFromStorage();
+      setInterval(refreshFromStorage, 5000);
+    })();
+  </script>
+</body>
+</html>
